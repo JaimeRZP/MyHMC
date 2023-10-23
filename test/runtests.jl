@@ -1,5 +1,5 @@
 using Test
-using MicroCanonicalHMC
+using MyHMC
 using LinearAlgebra
 using Random
 using Statistics

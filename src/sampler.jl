@@ -39,10 +39,10 @@ end
 
 Constructor for the MicroCanonical HMC sampler
 """
-function MyHMC(nadapt::Int, TEV::Real; kwargs...)
+function HMC(N::Int, ϵ::Real; kwargs...)
     """the MyHMC (q = 0 Hamiltonian) sampler"""
-    sett = Settings(; nadapt = nadapt, TEV = TEV, kwargs...)
-    hyperparameters = Hyperparameters(; kwargs...)
+    sett = Settings(; kwargs...)
+    hyperparameters = Hyperparameters(; N=N, ϵ=ϵ, kwargs...)
 
     ### integrator ###
     if sett.integrator == "LF" # leapfrog
@@ -101,9 +101,8 @@ function Step(
     kwargs = Dict(kwargs)
     d = length(trans_init_params)
     l, g = -1 .* h.∂lπ∂θ(trans_init_params)
-    u = Random_unit_vector(rng, d)
+    u = Random_unit_vector(rng, d; _normalize=false)
     state = MyHMCState(rng, 0, trans_init_params, u, l, g, 0.0, h)
-    state = tune_hyperparameters(rng, sampler, state; kwargs...)
     transition = Transition(state, bijector)
     return transition, state
 end
@@ -118,11 +117,10 @@ function Step(
     local xx, uu, ll, gg
     dialog = get(kwargs, :dialog, false)
     N = sampler.hyperparameters.N
-    eps = sampler.hyperparameters.eps
     x, u, l, g, dE = state.x, state.u, state.l, state.g, state.dE
     # Hamiltonian step
     for i in 1:N
-        xx, uu, ll, gg = sampler.hamiltonian_dynamics(sampler, target, state)
+        xx, uu, ll, gg = sampler.hamiltonian_dynamics(sampler, state)
     end
     #Metropolis Adjustment
     dEE =  (l - ll) - (dot(uu,uu) - dot(u,u))/2
@@ -131,11 +129,9 @@ function Step(
     ll = @.(accept * l + (1 - accept) * ll)
     gg = @.(accept * g + (1 - accept) * gg)
     dEE = @.(accept * dE + (1 - accept) * dEE)
-    # Langevin-like noise
-    uuu = Partially_refresh_momentum(rng, nu, uu)
-    dEE = kinetic_change + ll - state.l
     # Resample energy
-    uuu = Random_unit_vector(target; _normalize=false)
+    uuu = Random_unit_vector(rng, length(uu); _normalize=false)
+
     state = MyHMCState(rng, state.i + 1, xx, uuu, ll, gg, dEE, state.h)
     transition = Transition(state, bijector)
     return transition, state
@@ -207,10 +203,10 @@ function Sample(
         trans_init_params = trans_init_params,
         kwargs...,
     )
-    push!(chain, [transition.θ; transition.ϵ; transition.δE; transition.ℓ])
+    push!(chain, [transition.θ; transition.δE; transition.ℓ])
 
     io = open(joinpath(fol_name, string(file_name, ".txt")), "w") do io
-        println(io, [transition.θ; transition.ϵ; transition.δE; transition.ℓ])
+        println(io, [transition.θ; transition.δE; transition.ℓ])
         @showprogress "MyHMC: " (progress ? 1 : Inf) for i = 1:n-1
             try
                 transition, state = Step(
@@ -220,8 +216,8 @@ function Sample(
                     bijector = target.transform,
                     kwargs...,
                 )
-                push!(chain, [transition.θ; transition.ϵ; transition.δE; transition.ℓ])
-                println(io, [transition.θ; transition.ϵ; transition.δE; transition.ℓ])
+                push!(chain, [transition.θ; transition.δE; transition.ℓ])
+                println(io, [transition.θ; transition.δE; transition.ℓ])
             catch err
                 if err isa InterruptException
                     rethrow(err)
@@ -239,4 +235,25 @@ function Sample(
     end
 
     return chain
+end
+
+function Summarize(samples::AbstractVector)
+    _samples = zeros(length(samples), 1, length(samples[1]))
+    _samples[:, 1, :] = mapreduce(permutedims, vcat, samples)
+    ess, rhat = MCMCDiagnosticTools.ess_rhat(_samples)
+    return ess, rhat
+end
+
+function Summarize(samples::AbstractMatrix)
+    dim_a, dim_b = size(samples)
+    _samples = zeros(dim_a, 1, dim_b)
+    _samples[:, 1, :] = samples
+    ess, rhat = MCMCDiagnosticTools.ess_rhat(_samples)
+    return ess, rhat
+end
+
+function Neff(samples, l::Int)
+    ess, rhat = Summarize(samples)
+    neff = ess ./ l
+    return 1.0 / mean(1 ./ neff)
 end
