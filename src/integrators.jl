@@ -26,6 +26,6 @@ function Leapfrog(
     ll, gg = -1 .* h.∂lπ∂θ(xx)
     #half step in momentum
     uu = uu .+ ((ϵ * 0.5).* (gg .* sigma)) 
-
-    return xx, uu, ll, gg
+    HH = ll + dot(uu,uu)/2
+    return xx, uu, ll, gg, HH
 end
