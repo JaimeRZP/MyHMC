@@ -125,7 +125,7 @@ function Step(
     end
     #Metropolis Adjustment
     dEE =  HH - H
-    accept = rand() < exp(-dEE)
+    accept = 0 #rand() < exp(-dEE)
     xx = @.(accept * x + (1 - accept) * xx)
     ll = @.(accept * l + (1 - accept) * ll)
     gg = @.(accept * g + (1 - accept) * gg)
