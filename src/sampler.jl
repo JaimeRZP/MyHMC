@@ -118,14 +118,15 @@ function Step(
     dialog = get(kwargs, :dialog, false)
     N = sampler.hyperparameters.N
     x, u, l, g, dE = state.x, state.u, state.l, state.g, state.dE
-    H =  l + dot(uu,uu)/2
+    println("Hell")
+    H =  dot(u,u)/2 + l 
     # Hamiltonian step
     for i in 1:N
         xx, uu, ll, gg, HH = sampler.hamiltonian_dynamics(sampler, state)
     end
     #Metropolis Adjustment
     dEE =  HH - H
-    accept = log(rand()) < dEE
+    accept = rand() < exp(-dEE)
     xx = @.(accept * x + (1 - accept) * xx)
     ll = @.(accept * l + (1 - accept) * ll)
     gg = @.(accept * g + (1 - accept) * gg)
