@@ -114,11 +114,10 @@ function Step(
     bijector = NoTransform,
     kwargs...,
 )
-    local xx, uu, ll, gg
+    local xx, uu, ll, gg, HH
     dialog = get(kwargs, :dialog, false)
     N = sampler.hyperparameters.N
     x, u, l, g, dE = state.x, state.u, state.l, state.g, state.dE
-    println("Hell")
     H =  dot(u,u)/2 + l 
     # Hamiltonian step
     for i in 1:N
