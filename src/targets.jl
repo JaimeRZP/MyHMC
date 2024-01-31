@@ -66,7 +66,7 @@ RosenbrockTarget(a, b; kwargs...) = begin
         x1 = x[1:Int(d / 2)]
         x2 = x[Int(d / 2)+1:end]
         m = @.((a - x1)^2 + b * (x2 - x1^2)^2)
-        return 0.5 * sum(m)
+        return -0.5 * sum(m)
     end
 
     function ∂lπ∂θ(x)

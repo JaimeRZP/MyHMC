@@ -5,8 +5,7 @@ function AbstractMCMC.step(
     init_params = nothing,
     kwargs...,
 )
-    logdensity = model.logdensity
-    logdensity = LogDensityProblemsAD.ADgradient(model.logdensity)
+    logdensity = -1 .* LogDensityProblemsAD.ADgradient(model.logdensity)
     if init_params == nothing
         d = LogDensityProblems.dimension(logdensity)
         init_params = randn(rng, d)
