@@ -20,7 +20,7 @@ function Leapfrog(
     #full step in x
     zz = z .- (ϵ .* u .- ((ϵ * 0.5).* (g .* sigma)))
     xx = zz .* sigma # rotate back to parameter space
-    ll, gg = h.∂lπ∂θ(xx)
+    ll, gg = -1 .* h.∂lπ∂θ(xx)
     #half step in momentum
     uu = u .- ((ϵ * 0.5).* ((g+gg) .* sigma)) 
     HH = ll - dot(uu,uu)/2
