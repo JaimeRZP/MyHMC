@@ -17,15 +17,12 @@ function Leapfrog(
     """leapfrog"""
     # go to the latent space
     z = x ./ sigma 
-    
-    #half step in momentum
-    uu =  u .- ((ϵ * 0.5).* (g .* sigma)) 
     #full step in x
-    zz = z .+ (ϵ .* uu)
+    zz = z .- (ϵ .* u .- ((ϵ * 0.5).* (g .* sigma)))
     xx = zz .* sigma # rotate back to parameter space
     ll, gg = -1 .* h.∂lπ∂θ(xx)
     #half step in momentum
-    uu = uu .- ((ϵ * 0.5).* (gg .* sigma)) 
-    HH = ll + dot(uu,uu)/2
+    uu = u .- ((ϵ * 0.5).* ((g+gg) .* sigma)) 
+    HH = ll - dot(uu,uu)/2
     return xx, uu, ll, gg, HH
 end

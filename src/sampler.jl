@@ -125,11 +125,11 @@ function Step(
     end
     #Metropolis Adjustment
     dEE =  HH - H
-    accept = 0 #rand() < exp(-dEE)
-    xx = @.(accept * x + (1 - accept) * xx)
-    ll = @.(accept * l + (1 - accept) * ll)
-    gg = @.(accept * g + (1 - accept) * gg)
-    dEE = @.(accept * dE + (1 - accept) * dEE)
+    accept = log(rand()) < dEE
+    xx = @.(accept * xx + (1 - accept) * x)
+    ll = @.(accept * ll + (1 - accept) * l)
+    gg = @.(accept * gg + (1 - accept) * g)
+    dEE = @.(accept * dEE + (1 - accept) * dE)
     # Resample energy
     uuu = Random_unit_vector(rng, length(uu); _normalize=false)
 
